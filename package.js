@@ -25,7 +25,8 @@ Package.onUse(function(api) {
   api.use("ecmascript");
   api.use("underscore", "server");
   api.use("link:dbaccess");
-  api.export("MongoOplog", ["server"]);
+  api.export("OpLogEvents", ["server"]);
+  api.export("OpLogWrite", ["server"]);
 });
 
 Package.onTest(function(api) {
@@ -36,4 +37,6 @@ Package.onTest(function(api) {
   //api.use("iron:router");
   api.use("link:oplog", ["server"]);
   api.add_files('./Test.js', ["server"]);
+  api.add_files('lib/oplog.js', ["server"]);
+
 });
