@@ -7,7 +7,7 @@ OpLogEvents = function(uri, filter, options) {
     this.options = options;
 }
 
-OpLogEvents.prototype.run = function() {
+OpLogEvents.prototype.run = function () {
     try {
         var self = this;
 
