@@ -1,6 +1,6 @@
 Package.describe({
   name: "link:oplog",
-  version: "1.0.0",
+  version: "1.0.2",
   // Brief, one-line summary of the package.
   summary: "",
   // URL to the Git repository containing the source code for this package.
@@ -24,7 +24,9 @@ Package.onUse(function(api) {
   api.versionsFrom("1.2.1");
   api.use("ecmascript");
   api.use("underscore", "server");
-  api.use("link:dbaccess");
+  api.add_files('server/oplog.js', ["server"]);
+
+  api.imply("link:dbaccess", ["server"]);
   api.export("OpLogEvents", ["server"]);
   api.export("OpLogWrite", ["server"]);
 });
@@ -36,7 +38,8 @@ Package.onTest(function(api) {
   api.use("http");
   //api.use("iron:router");
   api.use("link:oplog", ["server"]);
+  //api.use("link:dbaccess", ["server"]);
   api.add_files('./Test.js', ["server"]);
-  api.add_files('lib/oplog.js', ["server"]);
+  api.add_files('server/oplog.js', ["server"]);
 
 });
