@@ -5,7 +5,7 @@ OpLogEvents = function(uri, filter, options) {
     this.uri = uri;
     this.filter = filter;
     this.options = options;
-}
+};
 
 OpLogEvents.prototype.run = function () {
     try {
@@ -13,30 +13,32 @@ OpLogEvents.prototype.run = function () {
 
         var oplog = MongoOplog(self.uri, {ns: self.filter}).tail();
 
+        /*
         oplog.on('op', function (data) {
-            //console.log(data);
+         console.log(data);
         });
-
+         */
         oplog.on('insert', function (doc) {
             //console.log(doc.op);
             console.log(doc.op);
-            self.insert(doc);
+            self.ins(doc);
         });
 
         oplog.on('update', function (doc) {
+            console.log(doc);
             console.log(doc.op);
-            self.update(doc);
+            self.upd(doc);
 
         });
 
         oplog.on('delete', function (doc) {
             console.log(doc.op);
-            self.delete(doc);
+            self.del(doc);
         });
 
         oplog.on('error', function (error) {
             console.log(error);
-            throw error;
+            //throw error;
         });
 
         oplog.on('end', function () {
@@ -52,61 +54,56 @@ OpLogEvents.prototype.run = function () {
         });
     }
     catch (error) {
-        console.log("OpLogEvents creation failed")
+        console.log("OpLogEvents creation failed");
         throw error;
 
     }
 };
 
 
-OpLogEvents.prototype.insert = function(doc) {
-}
+OpLogEvents.prototype.ins = function (doc) {
+};
 
-OpLogEvents.prototype.update = function(doc) {
-}
+OpLogEvents.prototype.upd = function (doc) {
+};
 
-OpLogEvents.prototype.delete = function(doc) {
-}
+OpLogEvents.prototype.del = function (doc) {
+};
 
 OpLogEvents.prototype.getCollectionName = function(doc) {
     return doc.ns.split('.')[1];
-}
+};
 
 
 
 OpLogWrite = function(uri, filter, options) {
     OpLogEvents.call(this, uri, filter, options);
 
-}
+};
 
 
 OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 
 
-
-OpLogWrite.prototype.insert = function(doc) {
-    var future = new Future();
+OpLogWrite.prototype.ins = function (doc) {
+    //var future = new Future();
     console.log('insert ' + doc.o__id.toString());
     var sql = this.options.commandManager.prepareInsert(this.getCollectionName(doc), doc);
     console.log(sql);
+};//.future();
 
-
-}.future()
-
-OpLogWrite.prototype.update = function(doc) {
+OpLogWrite.prototype.upd = function (doc) {
     console.log('update '+doc.o2._id.toString());
     var sql = this.options.commandManager.prepareUpdate(this.getCollectionName(doc), doc);
-
     console.log(sql);
-}
+};
 
-OpLogWrite.prototype.delete = function(doc) {
+OpLogWrite.prototype.del = function (doc) {
     console.log('delete '+doc.o._id.toString()());
     var sql = this.options.commandManager.prepareDelete(this.getCollectionName(doc), doc);
-
     console.log(sql);
 
-}
+};
 
 
 

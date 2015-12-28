@@ -7,7 +7,7 @@
 
 var commandMgr = null;
 var dbDef = null;
-var connManager = null
+var connManager = null;
 
 
 Tinytest.add('OpLog', function (test) {
