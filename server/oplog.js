@@ -87,18 +87,24 @@ OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 
 OpLogWrite.prototype.ins = function (doc) {
     //var future = new Future();
-    console.log('insert ' + doc.o__id.toString());
+    console.log('insert ' + doc.o._id.toString());
     var sql = this.commandManager.prepareInsert(this.getCollectionName(doc), doc);
+    sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
     console.log(sql);
-};//.future();
+    ret = this.commandManager.execSql(sql, doc, 'i').wait();
+
+    console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
+}.future();
 
 OpLogWrite.prototype.upd = function (doc) {
     console.log('update '+doc.o2._id.toString());
     var sql = this.commandManager.prepareUpdate(this.getCollectionName(doc), doc);
-
     sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
     console.log(sql);
-};
+
+    ret = this.commandManager.execSql(sql, doc, 'u').wait();
+    console.log(ret == true ? "updated success " + doc.o2._id.toString() : "update fail " + doc.o2._id.toString());
+}.future();
 
 OpLogWrite.prototype.del = function (doc) {
     console.log('delete '+doc.o._id.toString()());
