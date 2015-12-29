@@ -1,11 +1,14 @@
 var MongoOplog = Npm.require('mongo-oplog');
+var Future = Npm.require('fibers/future');
 
 
-OpLogEvents = function (uri, filter, commandMgr, docUtil) {
+/*
+ OpLogEvents
+ */
+
+OpLogEvents = function (uri, filter) {
     this.uri = uri;
     this.filter = filter;
-    this.commandManager = commandMgr;
-    this.docUtil = docUtil;
 };
 
 OpLogEvents.prototype.run = function () {
@@ -20,21 +23,21 @@ OpLogEvents.prototype.run = function () {
         });
          */
         oplog.on('insert', function (doc) {
-            //console.log(doc.op);
             console.log(doc.op);
             self.ins(doc);
-        });
+
+        })
 
         oplog.on('update', function (doc) {
             console.log(doc);
             console.log(doc.op);
-            self.upd(doc);
+            //self.upd(doc);
 
         });
 
         oplog.on('delete', function (doc) {
             console.log(doc.op);
-            self.del(doc);
+            //self.del(doc);
         });
 
         oplog.on('error', function (error) {
@@ -62,56 +65,79 @@ OpLogEvents.prototype.run = function () {
 };
 
 
-OpLogEvents.prototype.ins = function (doc) {
-};
-
-OpLogEvents.prototype.upd = function (doc) {
-};
-
-OpLogEvents.prototype.del = function (doc) {
-};
 
 OpLogEvents.prototype.getCollectionName = function(doc) {
     return doc.ns.split('.')[1];
 };
 
 
-OpLogWrite = function (uri, filter, commandMgr, docUtil) {
-    OpLogEvents.call(this, uri, filter, commandMgr, docUtil);
-
+/*
+ OpLogWrite
+ */
+OpLogWrite = function (uri, filter, connection, dbUtil) {
+    OpLogEvents.call(this, uri, filter);
+    this.dbUtil = dbUtil;
+    this.connection = connection;
 };
-
 
 OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 
 
+
 OpLogWrite.prototype.ins = function (doc) {
-    //var future = new Future();
-    console.log('insert ' + doc.o._id.toString());
-    var sql = this.commandManager.prepareInsert(this.getCollectionName(doc), doc);
-    sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
-    console.log(sql);
-    ret = this.commandManager.execSql(sql, doc, 'i').wait();
+    try {
 
-    console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
+        self = this;
+
+        //future = new Future();
+
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+
+        cmdMgr.prepareInsert(this.getCollectionName(doc), doc);
+        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
+
+        console.log(cmdMgr.sql);
+        var ret = cmdMgr.execSql(doc, 'i').wait();
+        console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
+        //future.return(ret);
+
+        //return future.wait();
+    }
+    catch (e) {
+        console.log(e);
+
+    }
+
 }.future();
 
+/*
 OpLogWrite.prototype.upd = function (doc) {
-    console.log('update '+doc.o2._id.toString());
-    var sql = this.commandManager.prepareUpdate(this.getCollectionName(doc), doc);
-    sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
-    console.log(sql);
+ try {
+ var sql = this.options.commandManager.prepareUpdate(this.getCollectionName(doc), doc);
+ //sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
+ console.log(sql);
 
-    ret = this.commandManager.execSql(sql, doc, 'u').wait();
-    console.log(ret == true ? "updated success " + doc.o2._id.toString() : "update fail " + doc.o2._id.toString());
+ ret = this.options.commandManager.execSql(sql, doc, 'u').wait();
+ console.log(ret == true ? "updated success " + doc.o2._id.toString() : "update fail " + doc.o2._id.toString());
+ }
+ catch(e) {
+ console.log (e);
+
+ }
 }.future();
-
+ */
+/*
 OpLogWrite.prototype.del = function (doc) {
-    console.log('delete '+doc.o._id.toString()());
-    var sql = this.commandManager.prepareDelete(this.getCollectionName(doc), doc);
-    console.log(sql);
-
-};
-
+ try {
+ var sql = this.options.commandManager.prepareDelete(this.getCollectionName(doc), doc);
+ console.log(sql);
+ ret = this.options.commandManager.execSql(sql, doc, 'd').wait();
+ console.log(ret == true ? "delete success " + doc.o._id.toString() : "delete fail " + doc.o._id.toString());
+ }
+ catch(e) {
+ console.log (e);
+ }
+ }.future();
+ */
 
 
