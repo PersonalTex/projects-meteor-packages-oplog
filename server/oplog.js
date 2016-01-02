@@ -37,7 +37,7 @@ OpLogEvents.prototype.run = function () {
 
         oplog.on('delete', function (doc) {
             console.log(doc.op);
-            //self.del(doc);
+            self.del(doc);
         });
 
         oplog.on('error', function (error) {
@@ -93,11 +93,11 @@ OpLogWrite.prototype.ins = function (doc) {
 
         var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
 
-        cmdMgr.prepareInsert(this.getCollectionName(doc), doc);
+        var sql = cmdMgr.prepareInsert(this.getCollectionName(doc), doc);
         //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
 
-        console.log(cmdMgr.sql);
-        var ret = cmdMgr.execSql(doc, 'i').wait();
+        console.log(sql);
+        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'i').wait();
         console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
         //future.return(ret);
 
@@ -110,34 +110,60 @@ OpLogWrite.prototype.ins = function (doc) {
 
 }.future();
 
-/*
+
 OpLogWrite.prototype.upd = function (doc) {
- try {
- var sql = this.options.commandManager.prepareUpdate(this.getCollectionName(doc), doc);
- //sql = this.docUtil.renameLinkFields(this.getCollectionName(doc), sql);
- console.log(sql);
+    try {
 
- ret = this.options.commandManager.execSql(sql, doc, 'u').wait();
- console.log(ret == true ? "updated success " + doc.o2._id.toString() : "update fail " + doc.o2._id.toString());
- }
- catch(e) {
- console.log (e);
+        self = this;
 
- }
+        //future = new Future();
+
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+
+        var sql = cmdMgr.prepareUpdate(this.getCollectionName(doc), doc);
+        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
+
+        console.log(sql);
+        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'u').wait();
+        console.log(ret == true ? "Update success " + doc.o._id.toString() : "Update fail " + doc.o._id.toString());
+        //future.return(ret);
+
+        //return future.wait();
+    }
+    catch (e) {
+        console.log(e);
+
+    }
+
+
 }.future();
- */
-/*
+
+
 OpLogWrite.prototype.del = function (doc) {
- try {
- var sql = this.options.commandManager.prepareDelete(this.getCollectionName(doc), doc);
- console.log(sql);
- ret = this.options.commandManager.execSql(sql, doc, 'd').wait();
- console.log(ret == true ? "delete success " + doc.o._id.toString() : "delete fail " + doc.o._id.toString());
- }
- catch(e) {
- console.log (e);
- }
- }.future();
- */
+    try {
+
+        self = this;
+
+        //future = new Future();
+
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+
+        var sql = cmdMgr.prepareDelete(this.getCollectionName(doc), doc);
+        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
+
+        console.log(sql);
+        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'd').wait();
+        console.log(ret == true ? "Delete success " + doc.o._id.toString() : "Delete fail " + doc.o._id.toString());
+        //future.return(ret);
+
+        //return future.wait();
+    }
+    catch (e) {
+        console.log(e);
+
+    }
+
+}.future();
+
 
 
