@@ -1,3 +1,5 @@
+//"use strict";
+
 var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
 
@@ -87,7 +89,7 @@ OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 OpLogWrite.prototype.ins = function (doc) {
     try {
 
-        self = this;
+        var self = this;
 
 
         var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
@@ -96,7 +98,6 @@ OpLogWrite.prototype.ins = function (doc) {
 
         if (sql != '') {
             var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'i').wait();
-            //console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
         }
     }
     catch (e) {
@@ -110,7 +111,7 @@ OpLogWrite.prototype.ins = function (doc) {
 OpLogWrite.prototype.upd = function (doc) {
     try {
 
-        self = this;
+        var self = this;
 
         //future = new Future();
 
@@ -137,7 +138,7 @@ OpLogWrite.prototype.upd = function (doc) {
 OpLogWrite.prototype.del = function (doc) {
     try {
 
-        self = this;
+        var self = this;
 
         var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
