@@ -23,20 +23,20 @@ OpLogEvents.prototype.run = function () {
         });
          */
         oplog.on('insert', function (doc) {
-            console.log(doc.op);
+            console.log(doc.op + ' ' + doc['_id']);
             self.ins(doc);
 
         })
 
         oplog.on('update', function (doc) {
-            console.log(doc);
-            console.log(doc.op);
+            //console.log(doc);
+            console.log(doc.op + ' ' + doc.o2['_id']);
             //self.upd(doc);
 
         });
 
         oplog.on('delete', function (doc) {
-            console.log(doc.op);
+            console.log(doc.op + ' ' + doc.o['_id']);
             self.del(doc);
         });
 
@@ -74,9 +74,9 @@ OpLogEvents.prototype.getCollectionName = function(doc) {
 /*
  OpLogWrite
  */
-OpLogWrite = function (uri, filter, connection, dbUtil) {
+OpLogWrite = function (uri, filter, connection, dbTables) {
     OpLogEvents.call(this, uri, filter);
-    this.dbUtil = dbUtil;
+    this.dbTables = dbTables;
     this.connection = connection;
 };
 
@@ -89,19 +89,15 @@ OpLogWrite.prototype.ins = function (doc) {
 
         self = this;
 
-        //future = new Future();
 
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
         var sql = cmdMgr.prepareInsert(this.getCollectionName(doc), doc);
-        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
 
-        console.log(sql);
-        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'i').wait();
-        console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
-        //future.return(ret);
-
-        //return future.wait();
+        if (sql != '') {
+            var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'i').wait();
+            //console.log(ret == true ? "insert success " + doc.o._id.toString() : "insert fail " + doc.o._id.toString());
+        }
     }
     catch (e) {
         console.log(e);
@@ -118,18 +114,17 @@ OpLogWrite.prototype.upd = function (doc) {
 
         //future = new Future();
 
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
         var sql = cmdMgr.prepareUpdate(this.getCollectionName(doc), doc);
-        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
 
-        console.log(sql);
-        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'u').wait();
-        console.log(ret == true ? "Update success " + doc.o._id.toString() : "Update fail " + doc.o._id.toString());
-        //future.return(ret);
+        if (sql != '') {
 
-        //return future.wait();
+            var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'u').wait();
+            //console.log(ret == true ? "Update success " + doc.o._id.toString() : "Update fail " + doc.o._id.toString());
+        }
     }
+
     catch (e) {
         console.log(e);
 
@@ -144,19 +139,15 @@ OpLogWrite.prototype.del = function (doc) {
 
         self = this;
 
-        //future = new Future();
-
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbUtil);
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
         var sql = cmdMgr.prepareDelete(this.getCollectionName(doc), doc);
-        //sql = this.options.dbUtil.renameLinkFields(this.getCollectionName(doc), sql);
 
-        console.log(sql);
-        var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'd').wait();
-        console.log(ret == true ? "Delete success " + doc.o._id.toString() : "Delete fail " + doc.o._id.toString());
-        //future.return(ret);
+        if (sql != '') {
 
-        //return future.wait();
+            var ret = cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'd').wait();
+            //console.log(ret == true ? "Delete success " + doc.o._id.toString() : "Delete fail " + doc.o._id.toString());
+        }
     }
     catch (e) {
         console.log(e);
