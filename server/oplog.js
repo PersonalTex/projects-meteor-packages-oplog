@@ -102,6 +102,7 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
                 sql = cmdMgr.prepareDelete(tableName, doc);
                 break;
         }
+        //console.log(sql);
         ret = sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true;
     }
     catch (e) {
