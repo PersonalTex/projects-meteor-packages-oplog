@@ -1,4 +1,4 @@
-//"use strict";
+"use strict"
 
 var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
@@ -39,7 +39,6 @@ OpLogEvents.prototype.run = function () {
 
         oplog.on('error', function (error) {
             console.log(error);
-            //throw error;
         });
 
         oplog.on('end', function () {
@@ -102,7 +101,6 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
                 sql = cmdMgr.prepareDelete(tableName, doc);
                 break;
         }
-        //console.log(sql);
         ret = sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true;
     }
     catch (e) {
@@ -114,71 +112,4 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
 
     }
 }.future();
-
-/*
- OpLogWrite.prototype.insertRecord = function (doc) {
-    try {
-        var self = this;
- var future = new Future();
- var ret = false;
-
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
-        var sql = cmdMgr.prepareInsert(this.getCollectionName(doc), doc);
- ret = sql != '' ? cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'i').wait() : true;
-    }
-    catch (e) {
-        console.log(e);
-    }
- finally {
- future.return(ret);
- return future.wait();
-
- }
-}.future();
-
-
- OpLogWrite.prototype.updateRecord = function (doc) {
-    try {
-        var self = this;
- var future = new Future();
- var ret = false;
-
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
-        var sql = cmdMgr.prepareUpdate(this.getCollectionName(doc), doc);
- ret = sql != '' ? cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'u').wait() : true;
-    }
-    catch (e) {
-        console.log(e);
-
-    }
- finally {
- future.return(ret);
- return future.wait();
-
- }
-}.future();
-
-
- OpLogWrite.prototype.deleteRecord = function (doc) {
-    try {
-        var self = this;
- var future = new Future();
- var ret = false;
-
-        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
-        var sql = cmdMgr.prepareDelete(this.getCollectionName(doc), doc);
- ret = sql != '' ? cmdMgr.execSql(sql, self.getCollectionName(doc), doc, 'd').wait() : true;
-    }
-    catch (e) {
-        console.log(e);
-
- }
- finally {
- future.return(ret);
- return future.wait();
-
- }
-}.future();
-
- */
 

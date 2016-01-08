@@ -25,21 +25,17 @@ Package.onUse(function(api) {
   api.use("ecmascript");
   api.use("underscore", "server");
   api.add_files('server/oplog.js', ["server"]);
-
   api.imply("link:dbaccess", ["server"]);
   api.export("OpLogEvents", ["server"]);
   api.export("OpLogWrite", ["server"]);
 });
 
 Package.onTest(function(api) {
+    /*
   api.use("ecmascript");
-  //api.use("underscore", "server");
   api.use("tinytest",["server"]);
-  api.use("http");
-  //api.use("iron:router");
   api.use("link:oplog", ["server"]);
-  //api.use("link:dbaccess", ["server"]);
   api.add_files('./Test.js', ["server"]);
   api.add_files('server/oplog.js', ["server"]);
-
+     */
 });
