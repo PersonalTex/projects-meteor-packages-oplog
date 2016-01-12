@@ -30,12 +30,14 @@ Package.onUse(function(api) {
   api.export("OpLogWrite", ["server"]);
 });
 
+/*
 Package.onTest(function(api) {
-    /*
+
   api.use("ecmascript");
   api.use("tinytest",["server"]);
   api.use("link:oplog", ["server"]);
   api.add_files('./Test.js', ["server"]);
   api.add_files('server/oplog.js', ["server"]);
-     */
-});
+
+ });
+ */

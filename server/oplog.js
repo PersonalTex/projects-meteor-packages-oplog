@@ -1,5 +1,3 @@
-"use strict"
-
 var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
 
@@ -13,7 +11,7 @@ OpLogEvents = function (uri, filter) {
     this.filter = filter;
 };
 
-OpLogEvents.prototype.run = function () {
+OpLogEvents.prototype.start = function () {
     try {
         var self = this;
 
@@ -74,7 +72,8 @@ OpLogWrite = function (uri, filter, connection, dbTables) {
     OpLogEvents.call(this, uri, filter);
     this.dbTables = dbTables;
     this.connection = connection;
-};
+    this.counters = {ins: 0, upd: 0, del: 0, err: 0};
+}
 
 OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 
@@ -83,6 +82,7 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
     try {
         var self = this;
         var future = new Future();
+
         var ret = false;
 
         var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
@@ -92,24 +92,38 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
         var tableName = self.getCollectionName(doc);
         switch (op) {
             case 'i':
-                sql = cmdMgr.prepareInsert(tableName, doc);
+                sql = cmdMgr.prepareInsert(tableName, doc).wait();
+                future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
                 break;
             case 'u':
-                sql = cmdMgr.prepareUpdate(tableName, doc);
+                sql = cmdMgr.prepareUpdate(tableName, doc).wait();
+                future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
                 break;
             case 'd':
-                sql = cmdMgr.prepareDelete(tableName, doc);
+                sql = cmdMgr.prepareDelete(tableName, doc).wait();
+                future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
                 break;
         }
-        ret = sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true;
+        //ret = sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true;
+        /*
+         if(!ret)
+         self.counters.err++;
+         else if(op == 'i')
+         self.counters.ins++;
+         else if(op == 'u')
+         self.counters.upd++;
+         else if(op == 'd')
+         self.counters.del++;
+
+         future.return(ret);
+         */
+        return future.wait();
+
+
     }
     catch (e) {
         console.log(e);
-    }
-    finally {
-        future.return(ret);
+        future.return(false);
         return future.wait();
-
     }
 }.future();
-
