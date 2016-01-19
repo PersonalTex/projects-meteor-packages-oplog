@@ -9,6 +9,7 @@ var Future = Npm.require('fibers/future');
 OpLogEvents = function (uri, filter) {
     this.uri = uri;
     this.filter = filter;
+
 };
 
 OpLogEvents.prototype.start = function () {
@@ -23,17 +24,17 @@ OpLogEvents.prototype.start = function () {
         });
          */
         oplog.on('insert', function (doc) {
-            self.writeRecord(doc, 'i').detach();
-        }.future());
+            self.writeRecord(doc, 'i');//.detach();
+        });//.future());
 
         oplog.on('update', function (doc) {
-            self.writeRecord(doc, 'u').detach();
+            self.writeRecord(doc, 'u').wait();
 
         }.future());
 
         oplog.on('delete', function (doc) {
-            self.writeRecord(doc, 'd').detach();
-        }.future());
+            self.writeRecord(doc, 'd');//.detach();
+        });//.future());
 
         oplog.on('error', function (error) {
             console.log(error);
@@ -74,7 +75,7 @@ OpLogWrite = function (uri, filter, connection, dbTables) {
     this.connection = connection;
     this.counters = {ins: 0, upd: 0, del: 0, err: 0};
 
-    this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
+    //this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
 
 }
 
@@ -94,37 +95,13 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
 
         var tableName = self.getCollectionName(doc);
 
-        sql = self.cmdMgr.prepareSql(tableName, doc, op).wait();
-        future.return(sql != '' ? self.cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
-        /*
-        switch (op) {
-            case 'i':
-         sql = self.cmdMgr.prepareInsert(tableName, doc).wait();
-         future.return(sql != '' ? self.cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
-                break;
-            case 'u':
-         sql = self.cmdMgr.prepareUpdate(tableName, doc).wait();
-         future.return(sql != '' ? self.cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
-                break;
-            case 'd':
-         sql = self.cmdMgr.prepareDelete(tableName, doc).wait();
-         future.return(sql != '' ? self.cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
-                break;
-        }
-         */
-        //ret = sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true;
-        /*
-         if(!ret)
-         self.counters.err++;
-         else if(op == 'i')
-         self.counters.ins++;
-         else if(op == 'u')
-         self.counters.upd++;
-         else if(op == 'd')
-         self.counters.del++;
+        var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
-         future.return(ret);
-         */
+
+        sql = cmdMgr.prepareSql(tableName, doc, op).wait();
+        future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
+
+
         return future.wait();
 
 
