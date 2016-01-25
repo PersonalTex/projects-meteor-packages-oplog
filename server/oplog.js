@@ -24,13 +24,13 @@ OpLogEvents.prototype.start = function () {
         });
          */
         oplog.on('insert', function (doc) {
+
             self.writeRecord(doc, 'i');//.detach();
         });//.future());
 
         oplog.on('update', function (doc) {
-            self.writeRecord(doc, 'u').wait();
-
-        }.future());
+            self.writeRecord(doc, 'u');
+        });
 
         oplog.on('delete', function (doc) {
             self.writeRecord(doc, 'd');//.detach();

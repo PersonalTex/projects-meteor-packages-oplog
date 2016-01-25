@@ -16,8 +16,8 @@ Npm.depends({
     "asserts" : "4.0.2",
     "mongodb": "2.0.48",
     "mongo-oplog": "1.0.1",
-    "fibers": "1.0.5",
-    "future": "2.3.1"
+    //"fibers": "1.0.5",
+    //"future": "2.3.1"
 });
 
 Package.onUse(function(api) {

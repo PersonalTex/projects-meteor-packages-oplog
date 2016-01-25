@@ -8,12 +8,6 @@
         }
       }
     },
-    "fibers": {
-      "version": "1.0.5"
-    },
-    "future": {
-      "version": "2.3.1"
-    },
     "mongo-oplog": {
       "version": "1.0.1",
       "dependencies": {
