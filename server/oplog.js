@@ -2,6 +2,8 @@ var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
 
 
+var syncdblog = null;
+
 /*
  OpLogEvents
  */
@@ -75,6 +77,7 @@ OpLogWrite = function (uri, filter, connection, dbTables) {
     this.connection = connection;
     this.counters = {ins: 0, upd: 0, del: 0, err: 0};
 
+    syncdblog = new Mongo.Collection('syncdb_log');
     //this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
 
 }
@@ -99,7 +102,7 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
 
 
         sql = cmdMgr.prepareSql(tableName, doc, op).wait();
-        future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
+        future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op, self.insertSyncDbLog).wait() : true);
 
 
         return future.wait();
@@ -111,4 +114,24 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
         future.return(false);
         return future.wait();
     }
+}.future();
+
+
+OpLogWrite.prototype.insertSyncDbLog = function (tableName, sql, record, action) {
+    //var self = this;
+
+    var future = new Future;
+
+    console.log('insertSyncDbLog ' + sql);
+    syncdblog.insert({
+        coll: tableName,
+        oper: action,
+        data: record,
+        command: sql
+    });
+
+    future.return(true);
+
+
+    return future.wait();
 }.future();
