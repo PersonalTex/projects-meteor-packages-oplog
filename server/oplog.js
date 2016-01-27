@@ -2,8 +2,6 @@ var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
 
 
-var syncdblog = null;
-
 /*
  OpLogEvents
  */
@@ -13,6 +11,7 @@ OpLogEvents = function (uri, filter) {
     this.filter = filter;
 
 };
+
 
 OpLogEvents.prototype.start = function () {
     try {
@@ -77,7 +76,7 @@ OpLogWrite = function (uri, filter, connection, dbTables) {
     this.connection = connection;
     this.counters = {ins: 0, upd: 0, del: 0, err: 0};
 
-    syncdblog = new Mongo.Collection('syncdb_log');
+    this.syncdblog = new Mongo.Collection('syncdb_log');
     //this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
 
 }
@@ -101,8 +100,12 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
         var cmdMgr = new OpSequelizeCommandManager(self.connection, self.dbTables);
 
 
+        cmdMgr.ee.on('beforeExecSql', function (tableName, sql, doc, action) {
+            self.writeDbLog(tableName, sql, doc, action);
+        });
+
         sql = cmdMgr.prepareSql(tableName, doc, op).wait();
-        future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op, self.insertSyncDbLog).wait() : true);
+        future.return(sql != '' ? cmdMgr.execSql(sql, tableName, doc, op).wait() : true);
 
 
         return future.wait();
@@ -116,22 +119,23 @@ OpLogWrite.prototype.writeRecord = function (doc, op) {
     }
 }.future();
 
+OpLogWrite.prototype.writeDbLog = function (tableName, sql, doc, action) {
 
-OpLogWrite.prototype.insertSyncDbLog = function (tableName, sql, record, action) {
-    //var self = this;
 
-    var future = new Future;
+    var self = this;
 
-    console.log('insertSyncDbLog ' + sql);
-    syncdblog.insert({
+    //var future = new Future;
+
+    self.syncdblog.insert({
         coll: tableName,
         oper: action,
-        data: record,
-        command: sql
+        data: doc,
+        command: sql,
+        created: {ts: new Date(), app: "integrator"}
     });
 
-    future.return(true);
+    //future.return(true);
 
 
-    return future.wait();
-}.future();
+    //return future.wait();
+}//.future();
