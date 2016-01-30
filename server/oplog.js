@@ -2,24 +2,26 @@ var MongoOplog = Npm.require('mongo-oplog');
 var Future = Npm.require('fibers/future');
 
 
+
 /*
- OpLogEvents
+ OpLogWrite
  */
-
-var idProcessSyncDbLog
-
-OpLogEvents = function (uri, filter) {
+OpLogWrite = function (uri, filter, connection, dbTables) {
     this.uri = uri;
     this.filter = filter;
-    this.intervalId = -1;
-};
+    this.dbTables = dbTables;
+    this.connection = connection;
+    timerObserveSyncDbLog = -1;
 
+    this.syncdblog = new Mongo.Collection('syncdb_log');
+    //this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
+}
 
-OpLogEvents.prototype.start = function () {
+OpLogWrite.prototype.start = function () {
     try {
         var self = this;
 
-        idProcessSyncDbLog = setInterval(processSyncDbLog, 5000, self.syncdblog, self.connection);
+        this.observeSyncDbLog(true);
 
         var oplog = MongoOplog(self.uri, {ns: self.filter}).tail();
 
@@ -30,8 +32,8 @@ OpLogEvents.prototype.start = function () {
          */
         oplog.on('insert', function (doc) {
 
-            self.writeRecord(doc, 'i');//.detach();
-        });//.future());
+            self.writeRecord(doc, 'i');
+        });
 
         oplog.on('update', function (doc) {
             self.writeRecord(doc, 'u');
@@ -65,27 +67,11 @@ OpLogEvents.prototype.start = function () {
 };
 
 
-
-OpLogEvents.prototype.getCollectionName = function(doc) {
+OpLogWrite.prototype.getCollectionName = function (doc) {
     return doc.ns.split('.')[1];
 };
 
 
-/*
- OpLogWrite
- */
-OpLogWrite = function (uri, filter, connection, dbTables) {
-    OpLogEvents.call(this, uri, filter);
-    this.dbTables = dbTables;
-    this.connection = connection;
-    this.counters = {ins: 0, upd: 0, del: 0, err: 0};
-
-    this.syncdblog = new Mongo.Collection('syncdb_log');
-    //this.cmdMgr = new OpSequelizeCommandManager(connection, dbTables);
-
-}
-
-OpLogWrite.prototype = Object.create(OpLogEvents.prototype);
 
 
 OpLogWrite.prototype.writeRecord = function (doc, op) {
@@ -154,25 +140,44 @@ OpLogWrite.prototype.writeDbLog = function (tableName, sql, doc, action) {
 }.future();
 
 
-var processSyncDbLog = function (syncdblog, connection) {
-    var self = this;
+OpLogWrite.prototype.observeSyncDbLog = function (status) {
+    if (status)
+        this.timerObserveSyncDbLog = setInterval(processSyncDbLog, 5000, this);
+    else
+        clearInterval(this.timerObserveSyncDbLog);
+}
 
-    var future = new Future;
+var processSyncDbLog = function (context) {
+    var self = context;
 
-    console.log("processSyncDbLog");
-    if (connection.dbInstance != null) {
-        var command = new SequelizeCommand(connection);
-        syncdblog.find({status: ""}, {sort: {"created.ts": 1}}).forEach(function (doc) {
+    try {
+        var future = new Future;
 
-            var ret = command.execSql(doc.command, doc.data, doc.oper).wait();
-            syncdblog.update({_id: doc['_id']}, {$set: {status: ret ? "OK" : "KO"}});
-        });
-        future.return(true);
+        console.log("processSyncDbLog");
+        if (self.connection.dbInstance != null) {
+            self.observeSyncDbLog(false);
+            var command = new SequelizeCommand(self.connection);
+            self.syncdblog.find({status: ""}, {sort: {"created.ts": 1}}).forEach(function (doc) {
+                var err = command.execSql(doc.command, doc.data, doc.oper).wait();
+                self.syncdblog.update(
+                    {_id: doc['_id']},
+                    {$set: {status: err == null ? "OK" : "KO", errorMsg: err == null ? '' : err}});
+            });
+            self.observeSyncDbLog(true);
+            future.return(true);
+        }
+        else {
+            self.observeSyncDbLog(false);
+            future.return(false);
+        }
     }
-    else {
+    catch (e) {
+        console.log(e);
+        self.observeSyncDbLog(self.connection.dbInstance != null);
         future.return(false);
-        clearInterval(idProcessSyncDbLog);
     }
+
     return future.wait();
 }.future();
+
 
